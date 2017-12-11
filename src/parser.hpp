@@ -8,6 +8,9 @@ namespace Lisp
   typedef std::shared_ptr<Parser> ParserPtr;
   class Parser
   {
+  public:
+    Parser() {}
+    virtual ~Parser() {}
   };
 }
 
