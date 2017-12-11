@@ -1,0 +1,5 @@
+set(LibSource parser.cpp struct.cpp)
+add_library(libinsLisp ${LibSource})
+set(execSource main.cpp)
+add_executable(insLisp ${execSource})
+target_link_libraries(insLisp libinsLisp)

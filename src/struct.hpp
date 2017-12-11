@@ -1,23 +1,51 @@
 #ifndef STRUCT_HPP
 #define STRUCT_HPP
 #include <string>
+#include <memory>
+#include <functional>
+#include <vector>
+#include <map>
+#include "parser.hpp"
+
 namespace Lisp
 {
   class Env;
   class Scope;
+  typedef std::shared_ptr<Env> EnvPtr;
+  typedef std::shared_ptr<Scope> ScopePtr;
   namespace Values
   {
-    enum Type = {symbol, str, num, list, lambda, func};
+    enum Type {symbol, str, num, list, lambda, func};
     class Any;
-    class Symbol;
-    class List;
     typedef std::string String;
     typedef double Number;
-    typedef std::string Symbol;
+    class Symbol
+    {
+      String mname;
+    public:
+      Symbol(String name = "") : mname(name) {}
+      Symbol(const Symbol & s) : mname(s.mname) {}
+      virtual ~Symbol() {}
+      String name() { return mname; }
+      Symbol & name(String n) { mname = n; return *this; }
+    };
     typedef std::vector<Any> List;
-    typedef Any (* Func)(Env *, List); // builtin func接受两个参数，一个是Env，另一个是 arglist，返回Any。
-    class Lambda;
+    typedef std::function<Any(std::shared_ptr<Env>, List)> Func; // builtin func接受两个参数，一个是Env，另一个是 arglist，返回Any。
 
+    class Lambda;
+    class Lambda
+    {
+      List margNames;
+      List mexprs;
+      std::shared_ptr<Scope> mdefScope;
+
+    public:
+      Lambda() {}
+      Lambda(List, ScopePtr) {}
+      virtual ~Lambda() {}
+
+      Any value(EnvPtr, List);
+    };
     class Any
     {
       Type mtype;
@@ -26,39 +54,36 @@ namespace Lisp
       String mstr;
       Number mnum;
       Lambda mlambda;
+      Func mfunc;
 
     public:
-      template<typename T> Any(Type type = symbol, const T & val);
+      //template<typename T> Any(Type type, const T & val);
+      Any(const Symbol & v) : mtype(symbol), msym(v) {}
+      Any(const List & v) : mtype(list), mlist(v) {}
+      Any(const String & v) : mtype(str), mstr(v) {}
+      Any(const Number & v) : mtype(num), mnum(v) {}
+      Any(const Lambda & v) : mtype(lambda), mlambda(v) {}
+      Any(const Func & v) : mtype(func), mfunc(v) {}
       Any();
-      virtual ~Any();
+      virtual ~Any() {}
       
-      Any value(Env * env);
-      Any value(Env *, List);
+      Any value(EnvPtr); // 取值
+      Any value(EnvPtr, List); // 调用函数
+      String stringify();
       Any & value(const Any & v);
       Any & value(const Symbol & v);
       Any & value(const String & v);
       Any & value(const List & v);
+      Any & value(const Lambda & v);
     };
-    class Lambda
-    {
-      List margNames;
-      List mexprs;
-      Scope * mdefScope;
-
-    public:
-      Lambda(List, Scope *);
-      Lambda(const Lambda &);
-      virtual ~Lambda();
-
-      Any value(Env *, List);
-    };
-  }
+    
+  };
   class Env
   {
-    Scope * mscope, * mdefScope;
-    Parser * mparser;
+    ScopePtr mscope, mdefScope;
+    ParserPtr mparser;
   public:
-    Env(Parser * mparser, Scope * scope, Scope * mdefScope = nullptr);
+    Env(ParserPtr mparser, ScopePtr scope, ScopePtr mdefScope = nullptr);
     virtual ~Env();
 
     Values::Any var(const Values::Symbol &);
@@ -69,23 +94,12 @@ namespace Lisp
   class Scope
   {
     Hash mvars;
-    int mref; // 被指向了多少次。事关生命期。
-    // 创建时 ref 定义为 0
-    // 以下几种情况 ref + 1
-    // 有另外的 Scope 指向这个 Scope
-    // 有 Lambda 定义在这个 Scope
-    // 以下几种情况 ref - 1
-    // 子 Scope 被销毁
-    // 定义于这个 Scope 里的 Lambda 被销毁
-    
-    // 一个 Scope 里的代码执行完了，检查ref。
-    // ref 是 0 就销毁，不是 0 就保留。
-    Scope * mparent;
-    Parser * mparser;
+    ScopePtr mparent;
+    ParserPtr mparser;
     int mdepth;
     bool readonly;
   public:
-    Scope(Parser *, Scope * = nullptr);
+    Scope(ParserPtr, ScopePtr = nullptr);
     Scope(const Scope &);
     virtual ~Scope();
 
@@ -102,5 +116,7 @@ namespace Lisp
     Scope & makeVar(const Values::Symbol &); // 在本 Scope 里定义变量然后设为空。
   };
   
-}
+};
+};
+
 #endif
