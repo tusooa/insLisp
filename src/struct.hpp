@@ -5,7 +5,6 @@
 #include <functional>
 #include <vector>
 #include <map>
-#include "parser.hpp"
 
 namespace Lisp
 {
@@ -13,6 +12,9 @@ namespace Lisp
   class Scope;
   typedef std::shared_ptr<Env> EnvPtr;
   typedef std::shared_ptr<Scope> ScopePtr;
+  class Parser;
+  typedef std::shared_ptr<Parser> ParserPtr;
+
   namespace Values
   {
     enum Type {symbol, str, num, list, lambda, func};
@@ -85,7 +87,8 @@ namespace Lisp
       Any & value(const Lambda & v);
     };
     
-  };
+  }
+  
   class Env
   {
     ScopePtr mscope, mdefScope;
@@ -124,7 +127,6 @@ namespace Lisp
     Scope & makeVar(const Values::Symbol &); // 在本 Scope 里定义变量然后设为空。
   };
   
-};
-};
+}
 
 #endif
