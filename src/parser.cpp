@@ -32,7 +32,10 @@ namespace Lisp
       {"num", Regex(R"foo(^[\s\n]*([+-]?(?:(?:\d+[,_\d]*)(?:\.[,_\d]*)?|\.(?:\d+[,_\d]*)))(?=[\s\n(){}]|''))foo")},
       {"symbol", Regex(R"foo(^[\s\n]*([^\s\n(){}`'\\_]+))foo")},
       {"string-s", Regex(R"foo(^[\s\n]*\{)foo")},
-      {"string-e", Regex(R"foo(\})foo")},
+      {"string-s-d", Regex(R"foo(^(\{))foo")},
+      {"string-e-d", Regex(R"foo(^(\}))foo")},
+      {"string-nospec", Regex(R"foo(^([^{}\\]+))foo")},
+      {"string-esc", Regex(R"foo(^\\(.))foo")},
       {"paren-s", Regex(R"foo(^[\s\n]*\()foo")},
       {"paren-e", Regex(R"foo(^[\s\n]*\))foo")},
     };
@@ -74,9 +77,10 @@ namespace Lisp
           tree.push_back(numHandler(m.str(1)));
           text.erase(0, m.length());
         } else if (regex_search(text, mregex["string-s"], m)) {
-          debug("string: ");
-          parseStr(text, depth);
           text.erase(0, m.length());
+          Values::String str = parseStr(text, depth);
+          debug("string: " << str);
+          tree.push_back(str);
         } else if (regex_search(text, mregex["symbol"], m)) {
           debug("symbol: " << m.str(1));
           tree.push_back(Values::Symbol(m.str(1)));
@@ -111,8 +115,42 @@ namespace Lisp
     is >> num;
     return num;
   }
-  Values::String Parser::parseStr(Values::String & text, int depth)
+  Values::String Parser::parseStr(Values::String & text, int outerDepth)
   {
-    return "";
+    Values::String result;
+    int depth = 0;
+    while (text.length()) {
+      smatch m;
+      if (regex_search(text, mregex["string-nospec"], m)) {
+        result += m.str(1);
+        text.erase(0, m.length());
+      } else if (regex_search(text, mregex["string-esc"], m)) {
+        debug("escaped: `" << m.str(1) << "'");
+        if (mesc.find(m.str(1)) != mesc.end()) {
+          result += mesc[m.str(1)];
+        } else {
+          result += m.str(1);
+        }
+        text.erase(0, m.length());
+      } else if (regex_search(text, mregex["string-e-d"], m)) {
+        if (depth <= 0) {
+          // 串结束
+          text.erase(0, m.length());
+          break;
+        }
+        depth -= 1;
+        result += m.str(1);
+        text.erase(0, m.length());
+      } else if (regex_search(text, mregex["string-s-d"], m)) {
+        result += m.str(1);
+        text.erase(0, m.length());
+        depth += 1;
+      } else {
+        // 不应该执行到这里
+        throw std::invalid_argument("");
+      }
+    }
+        
+    return result;
   }
 }
