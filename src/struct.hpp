@@ -30,6 +30,7 @@ namespace Lisp
       virtual ~Symbol() {}
       String name() const { return mname; }
       Symbol & name(String n) { mname = n; return *this; }
+      bool operator==(const Symbol & another) const { return mname == another.mname; }
     };
     typedef std::vector<Any> List;
     typedef std::function<Any(std::shared_ptr<Env>, List)> Func; // builtin func接受两个参数，一个是Env，另一个是 arglist，返回Any。
@@ -119,8 +120,8 @@ namespace Lisp
     Values::Any setVar(const Values::Symbol &, const Values::Any &); // 设定本 Scope 里的变量
     Values::Any getVar(const Values::Symbol &) const;
     bool hasVarInScope(const Values::Symbol &) const; // 本 Scope 里是否存在某 var
-    Scope * varScope(const Values::Symbol &) const;
-    Scope * varScopeRW(const Values::Symbol &) const;
+    ScopePtr varScope(const Values::Symbol &) const;
+    ScopePtr varScopeRW(const Values::Symbol &) const;
     Scope & makeRO();
     Scope & makeRW();
     bool isRO() const;
