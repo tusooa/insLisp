@@ -31,6 +31,7 @@ namespace Lisp
       String name() const { return mname; }
       Symbol & name(String n) { mname = n; return *this; }
       bool operator==(const Symbol & another) const { return mname == another.mname; }
+      bool operator<(const Symbol & another) const { return mname < another.mname; }
     };
     typedef std::vector<Any> List;
     typedef std::function<Any(std::shared_ptr<Env>, List)> Func; // builtin func接受两个参数，一个是Env，另一个是 arglist，返回Any。
