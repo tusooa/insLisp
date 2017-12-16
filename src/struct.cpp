@@ -41,6 +41,42 @@ namespace Lisp
       }
       return result;
     }
+    Any Any::value(EnvPtr e) const
+    {
+      if (mtype == Type::symbol) {
+        return e->var(msym);
+      } else if (mtype == Type::list) {
+        auto lst = list();
+        if (lst.size() < 1) {
+          throw std::invalid_argument("empty list");
+        }
+        Any first = lst[0];
+        lst.erase(lst.begin());
+        Any firstVal = first.value(e);
+        if (firstVal.type() == Type::func) {
+          Func f = firstVal.func();
+          if (f.quoted()) {
+            return f(e, lst);
+          } else {
+            List valList;
+            for (auto && i : lst) {
+              valList.push_back(i.value(e));
+            }
+            return f(e, valList);
+          }
+        } else if (firstVal.type() == Type::lambda) {
+          List valList;
+          for (auto && i : lst) {
+            valList.push_back(i.value(e));
+          }
+          return firstVal.lambda().value(e, valList);
+        } else {
+          throw std::invalid_argument("first item is neither a func nor a lambda");
+        }
+      } else { // return as-is
+        return *this;
+      }
+    }
     // Func
     Func::Func(_Func func, bool quoted) : mfunc(func), mquoted(quoted)
     {
@@ -112,4 +148,8 @@ namespace Lisp
     mvars[name] = Values::List();
     return *this;
   }// 在本 Scope 里定义变量然后设为空。
+  Values::Any Env::var(const Values::Symbol & name) const
+  {
+    return Values::Any();
+  }
 }; 

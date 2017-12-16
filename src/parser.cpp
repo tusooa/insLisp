@@ -1,6 +1,7 @@
 #include "parser.hpp"
 #include <sstream>
 #include "constants.hpp"
+#include "func.hpp"
 
 namespace Lisp
 {
