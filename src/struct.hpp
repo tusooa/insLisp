@@ -34,21 +34,34 @@ namespace Lisp
       bool operator<(const Symbol & another) const { return mname < another.mname; }
     };
     typedef std::vector<Any> List;
-    typedef std::function<Any(std::shared_ptr<Env>, List)> Func; // builtin func接受两个参数，一个是Env，另一个是 arglist，返回Any。
+    class Func;
+    class Func
+    {
+      typedef std::function<Any(EnvPtr, List)> _Func; // builtin func接受两个参数，一个是Env，另一个是 arglist，返回Any。
+      _Func mfunc;
+      bool mquoted;
+    public:
+      Func() {}
+      Func(_Func func, bool quoted = false); // 这里不能进行实体化，因为用到了_Func (提到了Any)
+      bool quoted() { return mquoted; }
+      Func & quote(bool q = true) { mquoted = q; return * this; }
+      Any operator()(EnvPtr e, List l);
+    };
 
     class Lambda;
     class Lambda
     {
       List margNames;
       List mexprs;
-      std::shared_ptr<Scope> mdefScope;
-
+      ScopePtr mdefScope;
+      void pairKV(EnvPtr);
     public:
       Lambda() {}
       Lambda(List, ScopePtr = nullptr);
       virtual ~Lambda() {}
 
       String stringify() const;
+      Any evalOutOfBox(EnvPtr, List);
       Any value(EnvPtr, List);
     };
     class Any
@@ -69,11 +82,10 @@ namespace Lisp
       Any(const Number & v) : mtype(Type::num), mnum(v) {}
       Any(const Lambda & v) : mtype(Type::lambda), mlambda(v) {}
       Any(const Func & v) : mtype(Type::func), mfunc(v) {}
-      Any();
+      Any() : mtype(Type::list) {}
       virtual ~Any() {}
       
       Any value(EnvPtr) const; // 取值
-      Any value(EnvPtr, List) const; // 调用函数
       Type type() const { return mtype; }
       Symbol sym() const { if (mtype == Type::symbol) { return msym; } throw std::invalid_argument("type not match"); }
       List list() const { if (mtype == Type::list) { return mlist; } throw std::invalid_argument("type not match"); }
@@ -101,8 +113,11 @@ namespace Lisp
 
     Values::Any var(const Values::Symbol &) const;
     Env & var(const Values::Symbol &, const Values::Any &);
-    
+    ScopePtr scope() const { return mscope; }
+    ScopePtr defScope() const { return mdefScope; }
+    ParserPtr parser() const { return mparser; }
   };
+
   typedef std::map<Values::Symbol, Values::Any> Hash;
   class Scope
   {

@@ -1,5 +1,6 @@
 #include "parser.hpp"
 #include <sstream>
+#include "constants.hpp"
 
 namespace Lisp
 {
@@ -48,7 +49,15 @@ namespace Lisp
     return l;
     }*/
 
-  
+  Values::Lambda Parser::parse(Values::String text)
+  {
+    Values::List l = parseCommand(text);
+    Values::List declaration;
+    declaration.push_back(optRest);
+    declaration.push_back(argvName);
+    l.insert(l.begin(), declaration);
+    return Values::Lambda(l);
+  }
   
   Values::List Parser::parseCommand(Values::String & text, int depth, State_T state)
   {

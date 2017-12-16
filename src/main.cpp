@@ -27,6 +27,6 @@ int main(int argc, char *argv[])
   Lambda lam(flist, std::make_shared<Scope>(s));
   std::cout << lam.stringify() << std::endl;
   std::string str(R"f(mewmew``foo (bar baz) 3.12 {pppq\\{\}}} )f");
-  std::cout << Any(il.parseCommand(str)).stringify() << std::endl;
+  std::cout << Any(il.parse(str)).stringify() << std::endl;
   return 0;
 }
