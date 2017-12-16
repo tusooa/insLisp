@@ -25,7 +25,7 @@ namespace Lisp
     }).quote()) },
     {Symbol("+"), Any(Func([](EnvPtr, List l)
      {
-       Number result;
+       Number result=0;
        for (auto && i : l) {
          result += i.num();
        }
@@ -39,6 +39,46 @@ namespace Lisp
        }
        return Any(result);
      }))},
+	 { Symbol("-"), Any(Func([](EnvPtr, List l)
+	 {
+		 Number result;
+		 if (l.size() == 0) {
+			 result = 0;
+		 }
+		 else {
+			 result = l[0].num();
+			 if (l.size() == 1) {
+				 result = -result;
+			 }
+			 else {
+				 l.erase(l.begin());
+				 for (auto && i : l) {
+					 result -= i.num();
+				 }
+			 }
+		 }
+		 return Any(result);
+	 })) },
+	 { Symbol("/"), Any(Func([](EnvPtr, List l)
+	 {
+		 Number result;
+		 if (l.size() == 0) {
+			 result = 1;
+		 }
+		 else {
+			 result = l[0].num();
+			 if (l.size() == 1) {
+				 result = 1/result;
+			 }
+			 else {
+				 l.erase(l.begin());
+				 for (auto && i : l) {
+					 result /= i.num();
+				 }
+			 }
+		 }
+		 return Any(result);
+	 })) },
     {Symbol("if"), Any(Func([](EnvPtr e, List l) -> Any
     {
       if (l.size() <= 1) {
