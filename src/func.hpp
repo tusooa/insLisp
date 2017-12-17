@@ -79,6 +79,65 @@ namespace Lisp
 		 }
 		 return Any(result);
 	 })) },
+	 { Symbol("="), Any(Func([](EnvPtr, List l)
+	 {
+		 int a=l.size();
+		 if (a == 1) {
+			 return Symbol("t");
+		 }
+		 else {
+			 int i;
+			 for (i = 0; i < a-1; i++) {
+				 if (l[i].num() != l[i + 1].num())
+					 return Any();
+			 }
+			 return Symbol("t");
+		 }
+	 })) },
+	 { Symbol(">"), Any(Func([](EnvPtr, List l)
+	 {
+		 int a = l.size();
+		 if (a == 1) {
+			 return Symbol("t");
+		 }
+		 else {
+			 int i;
+			 for (i = 0; i < a - 1; i++) {
+				 if (l[i].num()<= l[i + 1].num())
+					 return Any();
+			 }
+			 return Symbol("t");
+	 })) },
+	 { Symbol("<"), Any(Func([](EnvPtr, List l)
+	 {
+		 int a = l.size();
+		 if (a == 1) {
+			 return Symbol("t");
+		 }
+		 else {
+			 int i;
+			 for (i = 0; i < a - 1; i++) {
+				 if (l[i].num()>=l[i + 1].num())
+					 return Any();
+			 }
+			 return Symbol("t");
+	 })) },
+	 { Symbol("concat"), Any(Func([](EnvPtr, List l)
+	 {
+		 String result = "";
+		 for (auto && i : l) {
+			 result += i.str();
+		 }
+		 return Any(result);
+	 })) },
+	 { Symbol("#"), Any(Func([](EnvPtr, List l)
+	 {
+		 return Any();
+	 })) },
+	 { Symbol("list"), Any(Func([](EnvPtr, List l)
+	 {
+		 return Any(l);
+	 })) },
     {Symbol("if"), Any(Func([](EnvPtr e, List l) -> Any
     {
       if (l.size() <= 1) {
