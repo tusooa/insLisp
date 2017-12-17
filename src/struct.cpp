@@ -1,6 +1,8 @@
 #include "struct.hpp"
 #include <string>
 #include <exception>
+#include "constants.hpp"
+
 namespace Lisp
 {
   namespace Values
@@ -77,6 +79,10 @@ namespace Lisp
         return *this;
       }
     }
+    bool Any::isTrue() // 只有nil(空表)是假
+    {
+      return !(mtype == Type::list && mlist.size() == 0);
+    }
     // Func
     Func::Func(_Func func, bool quoted) : mfunc(func), mquoted(quoted)
     {
@@ -111,22 +117,64 @@ namespace Lisp
       result += ")";
       return result;
     }
-    void Lambda::pairKV(EnvPtr e)
+    void Lambda::pairKV(EnvPtr e, List l)
     {
-      // 
+      bool opt = false, rest = false;
+      for (auto && n : margNames) {
+        if (n.sym() == optOptional) { // 可选项
+          if (rest) {
+            throw std::invalid_argument("invalid lambda defination: &optional following &rest");
+          }
+          opt = true;
+        }
+        if (n.sym() == optRest) { // 余项
+          if (rest) {
+            throw std::invalid_argument("invalid lambda defination: &rest following &rest");
+          }
+          rest = true;
+          continue;
+        }
+        if (rest) {
+          List restArgs;
+          for (auto && r : l) {
+            restArgs.push_back(r);
+          }
+          e->scope()->setVar(n.sym(), Any(restArgs));
+          return;
+        }
+        if (l.size() == 0) {
+          if (opt) {
+            e->scope()->setVar(n.sym(), Any()); // default to nil
+            continue;
+          }
+          throw std::invalid_argument("too few arguments");
+        }
+        e->scope()->setVar(n.sym(), l[0]);
+        l.erase(l.begin());
+      }
+      if (l.size() > 0) {
+        throw std::invalid_argument("too many arguments");
+      }      
     }
     Any Lambda::evalOutOfBox(EnvPtr e, List l)
     {
-      pairKV(e);
-      return Any();
+      pairKV(e, l);
+      Any result;
+      for (auto && stat : mexprs) {
+        result = stat.value(e);
+      }
+      return result;
     }
     Any Lambda::value(EnvPtr e, List l)
     {
-      return Any();
+      // create sub scope and env
+      ScopePtr s = std::make_shared<Scope>(e->parser(), e->scope());
+      EnvPtr subEnv = std::make_shared<Env>(e->parser(), s, mdefScope);
+      return evalOutOfBox(subEnv, l);
     }
   };
   // Scope
-  Scope::Scope(ParserPtr parser, ScopePtr parent) : mparser(parser), mparent(parent), readonly(false)
+  Scope::Scope(ParserPtr parser, ScopePtr parent) : mparser(parser), mparent(parent), mreadonly(false)
   {
     if (mparent) {
       mdepth = mparent->mdepth + 1;
@@ -138,18 +186,122 @@ namespace Lisp
       throw std::overflow_error("exceeding max depth");
       }*/
   }
-  /*Values::Any Scope::var(const Values::Symbol & s) const
-    {
-
-    }*/
 
   Scope & Scope::makeVar(const Values::Symbol &name)
   {
     mvars[name] = Values::List();
     return *this;
-  }// 在本 Scope 里定义变量然后设为空。
-  Values::Any Env::var(const Values::Symbol & name) const
+  }
+  Values::Any Scope::setVar(const Values::Symbol & name, const Values::Any & val)
   {
-    return Values::Any();
+    return mvars[name] = val;
+  }
+  Values::Any Scope::getVar(const Values::Symbol & name) const
+  {
+    Values::Any result = mvars.find(name)->second; // 奇怪的问题。
+    return result;
+  }
+  bool Scope::hasVarInScope(const Values::Symbol & name) const
+  {
+    return mvars.find(name) != mvars.end();
+  }
+  Scope & Scope::makeRO()
+  {
+    mreadonly = true;
+    return *this;
+  }
+  Scope & Scope::makeRW()
+  {
+    mreadonly = false;
+    return *this;
+  }
+  bool Scope::isRO() const
+  {
+    return mreadonly;
+  }
+  ScopePtr Scope::varScope(const Values::Symbol & name)
+  {
+    if (hasVarInScope(name)) {
+      return shared_from_this();
+    } else if (mparent) {
+      return mparent->varScope(name);
+    } else {
+      return nullptr;
+    }
+  }
+  ScopePtr Scope::varScopeRW(const Values::Symbol & name)
+  {
+    if (hasVarInScope(name)) {
+      if (isRO()) {
+        return nullptr;
+      } else {
+        return shared_from_this();
+      }
+    } else if (mparent) {
+      return mparent->varScopeRW(name);
+    } else {
+      return nullptr;
+    }
+  }
+  Values::Any Scope::var(const Values::Symbol & name)
+  {
+    ScopePtr s = varScope(name);
+    if (s) {
+      return s->getVar(name);
+    } else {
+      throw std::invalid_argument("no such variable: " + name.name());
+    }
+  }
+  Scope & Scope::var(const Values::Symbol & name, const Values::Any & val)
+  {
+    ScopePtr s = varScopeRW(name);
+    if (s) {
+      s->setVar(name, val);
+      return *this;
+    } else {
+      setVar(name, val); // 这里会忽略掉自己的RO属性。
+      return *this;
+    }
+  }
+
+  // Env
+  Env::Env(ParserPtr parser, ScopePtr scope, ScopePtr defScope) : mparser(parser), mscope(scope), mdefScope(defScope)
+  {
+  }
+  Values::Any Env::var(const Values::Symbol & name)
+  {
+    if (! mdefScope) {
+      return mscope->var(name);
+    }
+    if (mscope->hasVarInScope(name)) {
+      return mscope->var(name);
+    } else {
+      ScopePtr s;
+      if (s = mdefScope->varScope(name)) {
+        return s->var(name);
+      } else if (s = mscope->varScope(name)) {
+        return s->var(name);
+      } else {
+        throw std::invalid_argument("variable not found: " + name.name());
+      }
+    }
+  }
+  Env & Env::var(const Values::Symbol & name, const Values::Any & val)
+  {
+    if (! mdefScope) {
+      mscope->var(name, val);
+      return *this;
+    }
+    if (mscope->hasVarInScope(name)) {
+      mscope->var(name, val);
+    } else {
+      ScopePtr s;
+      if (s = mdefScope->varScopeRW(name)) {
+        s->setVar(name, val);
+      } else {
+        mscope->var(name, val);
+      }
+    }
+    return *this;
   }
 }; 

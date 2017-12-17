@@ -54,7 +54,7 @@ namespace Lisp
       List margNames;
       List mexprs;
       ScopePtr mdefScope;
-      void pairKV(EnvPtr);
+      void pairKV(EnvPtr, List);
     public:
       Lambda() {}
       Lambda(List, ScopePtr = nullptr);
@@ -94,11 +94,7 @@ namespace Lisp
       Lambda lambda() const { if (mtype == Type::lambda) { return mlambda; } throw std::invalid_argument("type not match"); }
       Func func() const { if (mtype == Type::func) { return mfunc; } throw std::invalid_argument("type not match"); }
       String stringify() const;
-      Any & value(const Any & v);
-      Any & value(const Symbol & v);
-      Any & value(const String & v);
-      Any & value(const List & v);
-      Any & value(const Lambda & v);
+      bool isTrue();
     };
     
   }
@@ -108,10 +104,10 @@ namespace Lisp
     ScopePtr mscope, mdefScope;
     ParserPtr mparser;
   public:
-    Env(ParserPtr mparser, ScopePtr scope, ScopePtr mdefScope = nullptr);
-    virtual ~Env();
+    Env(ParserPtr parser, ScopePtr scope, ScopePtr defScope = nullptr);
+    virtual ~Env() {}
 
-    Values::Any var(const Values::Symbol &) const;
+    Values::Any var(const Values::Symbol &);
     Env & var(const Values::Symbol &, const Values::Any &);
     ScopePtr scope() const { return mscope; }
     ScopePtr defScope() const { return mdefScope; }
@@ -119,25 +115,25 @@ namespace Lisp
   };
 
   typedef std::map<Values::Symbol, Values::Any> Hash;
-  class Scope
+  class Scope : public std::enable_shared_from_this<Scope>
   {
     Hash mvars;
     ScopePtr mparent;
     ParserPtr mparser;
     int mdepth;
-    bool readonly;
+    bool mreadonly;
   public:
     Scope(ParserPtr, ScopePtr = nullptr);
     //Scope(const Scope &);
     virtual ~Scope() {}
 
-    Values::Any var(const Values::Symbol &) const; // 存取 vars
+    Values::Any var(const Values::Symbol &); // 存取 vars
     Scope & var(const Values::Symbol &, const Values::Any &);
     Values::Any setVar(const Values::Symbol &, const Values::Any &); // 设定本 Scope 里的变量
     Values::Any getVar(const Values::Symbol &) const;
     bool hasVarInScope(const Values::Symbol &) const; // 本 Scope 里是否存在某 var
-    ScopePtr varScope(const Values::Symbol &) const;
-    ScopePtr varScopeRW(const Values::Symbol &) const;
+    ScopePtr varScope(const Values::Symbol &);
+    ScopePtr varScopeRW(const Values::Symbol &);
     Scope & makeRO();
     Scope & makeRW();
     bool isRO() const;

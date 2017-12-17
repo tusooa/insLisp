@@ -7,39 +7,29 @@ namespace Lisp
 {
   Parser::Parser()
   {
-    /*if (mdelim.command.empty()) {
-      mdelim.command = defaultDelim.command;
-    }
-    if (mdelim.string.empty()) {
-      mdelim.string = defaultDelim.string;
-    }
-    if (mdelim.paren.empty()) {
-      mdelim.paren = defaultDelim.paren;
-    }
-    const std::vector<Values::String> v = {"escape", "ws", "wsornot", "purenum", "notspecial"};
-    for (auto key : v) {
-      if (miden.find(key) == miden.end()) {
-        miden[key] = defaultIden[key];
-      }
-      }*/
+    mesc = defaultEsc;
     genRegex();
   }
+
+#ifdef _USE_BOOST
+#define _R_MOD , boost::regex_constants::no_mod_m
+#endif
 
   void Parser::genRegex()
   {
     // find- regex
     mregex = {
-      {"command-s", Regex(R"r(^((?:.|\n)*?)(``|$))r")},
-      {"command-e", Regex(R"r(^[\s\n]*(?:''|$))r")},
-      {"num", Regex(R"foo(^[\s\n]*([+-]?(?:(?:\d+[,_\d]*)(?:\.[,_\d]*)?|\.(?:\d+[,_\d]*)))(?=[\s\n(){}]|''))foo")},
-      {"symbol", Regex(R"foo(^[\s\n]*([^\s\n(){}`'\\_]+))foo")},
-      {"string-s", Regex(R"foo(^[\s\n]*\{)foo")},
-      {"string-s-d", Regex(R"foo(^(\{))foo")},
-      {"string-e-d", Regex(R"foo(^(\}))foo")},
-      {"string-nospec", Regex(R"foo(^([^{}\\]+))foo")},
-      {"string-esc", Regex(R"foo(^\\(.))foo")},
-      {"paren-s", Regex(R"foo(^[\s\n]*\()foo")},
-      {"paren-e", Regex(R"foo(^[\s\n]*\))foo")},
+      {"command-s", Regex(R"r(^((?:.|\n)*?)(``|$))r" _R_MOD)},
+      {"command-e", Regex(R"r(^[\s\n]*(?:''|$))r" _R_MOD)},
+      {"num", Regex(R"foo(^[\s\n]*([+-]?(?:(?:\d+[,_\d]*)(?:\.[,_\d]*)?|\.(?:\d+[,_\d]*)))(?=[\s\n(){}]|''))foo" _R_MOD)},
+      {"symbol", Regex(R"foo(^[\s\n]*([^\s\n(){}`'\\_]+))foo" _R_MOD)},
+      {"string-s", Regex(R"foo(^[\s\n]*\{)foo" _R_MOD)},
+      {"string-s-d", Regex(R"foo(^(\{))foo" _R_MOD)},
+      {"string-e-d", Regex(R"foo(^(\}))foo" _R_MOD)},
+      {"string-nospec", Regex(R"foo(^([^{}\\]+))foo" _R_MOD)},
+      {"string-esc", Regex(R"foo(^\\(.))foo" _R_MOD)},
+      {"paren-s", Regex(R"foo(^[\s\n]*\()foo" _R_MOD)},
+      {"paren-e", Regex(R"foo(^[\s\n]*\))foo" _R_MOD)},
     };
   }
 

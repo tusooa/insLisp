@@ -1,6 +1,7 @@
 #ifndef FUNC_HPP
 #define FUNC_HPP
 
+#include <iostream>
 #include "struct.hpp"
 namespace Lisp
 {
@@ -79,7 +80,7 @@ namespace Lisp
 		 }
 		 return Any(result);
 	 })) },
-	 { Symbol("="), Any(Func([](EnvPtr, List l)
+	 { Symbol("="), Any(Func([](EnvPtr, List l) -> Any
 	 {
 		 int a=l.size();
 		 if (a == 1) {
@@ -94,7 +95,7 @@ namespace Lisp
 			 return Symbol("t");
 		 }
 	 })) },
-	 { Symbol(">"), Any(Func([](EnvPtr, List l)
+	 { Symbol(">"), Any(Func([](EnvPtr, List l) -> Any
 	 {
 		 int a = l.size();
 		 if (a == 1) {
@@ -107,8 +108,9 @@ namespace Lisp
 					 return Any();
 			 }
 			 return Symbol("t");
+                 }
 	 })) },
-	 { Symbol("<"), Any(Func([](EnvPtr, List l)
+	 { Symbol("<"), Any(Func([](EnvPtr, List l) -> Any
 	 {
 		 int a = l.size();
 		 if (a == 1) {
@@ -121,8 +123,9 @@ namespace Lisp
 					 return Any();
 			 }
 			 return Symbol("t");
+                 }
 	 })) },
-	 { Symbol("concat"), Any(Func([](EnvPtr, List l)
+	 { Symbol("concat"), Any(Func([](EnvPtr, List l) -> Any
 	 {
 		 String result = "";
 		 for (auto && i : l) {
@@ -151,8 +154,44 @@ namespace Lisp
       if (l.size() <= 1) {
         throw std::invalid_argument("wrong-number-arguments");
       }
-      //if ()
-      return Any();
+      if (l[0].value(e).isTrue()) {
+        return l[1].value(e);
+      } else {
+        if (l.size() > 2) {
+          Any result;
+          for (std::size_t it = 2; it < l.size(); it++) {
+            result = l[it].value(e);
+          }
+          return result;
+        }
+        return Any();
+      }
+    }).quote())},
+    {Symbol("lambda"), Any(Func([](EnvPtr e, List l)
+    {
+      return Any(Lambda(l, e->scope()));
+    }).quote())},
+    {Symbol("print"), Any(Func([](EnvPtr e, List l) -> Any
+                                 {
+                                   for (auto && i : l) {
+                                     std::cout << (i.type() == Type::str ? i.str() : i.stringify());
+                                   }
+                                   return Any();
+                                 }))},
+    {Symbol("setq"), Any(Func([](EnvPtr e, List l)
+    {
+      if (l.size() == 0 || l.size() % 2 == 1) {
+        throw std::invalid_argument("wrong-number-arguments");
+      }
+      Any result;
+      for (std::size_t i = 0; i < l.size(); i += 2) {
+        if (l[i].type() != Type::symbol) {
+          throw std::invalid_argument("varname is not a symbol");
+        }
+        result = l[i + 1].value(e);
+        e->var(l[i].sym(), result);
+      }
+      return result;
     }).quote())},
   };
 }
