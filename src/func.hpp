@@ -1,3 +1,5 @@
+// builtin functions.
+
 #ifndef FUNC_HPP
 #define FUNC_HPP
 
@@ -136,7 +138,7 @@ namespace Lisp
 	 { Symbol("#"), Any(Func([](EnvPtr, List l)
 	 {
 		 return Any();
-	 })) },
+	 }).quote()) },
 	 { Symbol("list"), Any(Func([](EnvPtr, List l)
 	 {
 		 return Any(l);
@@ -171,6 +173,13 @@ namespace Lisp
     {
       return Any(Lambda(l, e->scope()));
     }).quote())},
+    {Symbol("progn"), Any(Func([](EnvPtr e, List l)
+    {
+      if (l.size() < 1) {
+        throw std::invalid_argument("wrong number aarguments");
+      }
+      return l[l.size() - 1];
+    }))},
     {Symbol("print"), Any(Func([](EnvPtr e, List l) -> Any
                                  {
                                    for (auto && i : l) {

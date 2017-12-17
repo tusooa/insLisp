@@ -1,3 +1,6 @@
+// structure.
+// Any,
+// Number, String, Symbol, Func, Lambda, List
 #include "struct.hpp"
 #include <string>
 #include <exception>

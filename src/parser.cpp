@@ -1,3 +1,5 @@
+// parser.
+// parse the given lisp code and store it into a Lambda.
 #include "parser.hpp"
 #include <sstream>
 #include "constants.hpp"
@@ -11,7 +13,7 @@ namespace Lisp
     genRegex();
   }
 
-#ifdef _USE_BOOST
+#ifdef _USE_BOOST // we dont need the /m which is boost's default
 #define _R_MOD , boost::regex_constants::no_mod_m
 #endif
 
@@ -45,7 +47,7 @@ namespace Lisp
     Values::List l = parseCommand(text);
     Values::List declaration;
     declaration.push_back(optRest);
-    declaration.push_back(argvName);
+    declaration.push_back(argvName); // feed the arguments into ARGV
     l.insert(l.begin(), declaration);
     return Values::Lambda(l);
   }
@@ -97,7 +99,8 @@ namespace Lisp
           return tree;
         } else {
           // 不应该执行到这儿
-          throw std::invalid_argument("");
+          // 一定是因为试图使用下划线作为标识符的一部分，而这是不允许的。
+          throw std::invalid_argument("attempting to use underscore as part of identifier");
         }
       } else {
         // 不应该执行到这儿
@@ -126,7 +129,7 @@ namespace Lisp
         text.erase(0, m.length());
       } else if (regex_search(text, mregex["string-esc"], m)) {
         debug("escaped: `" << m.str(1) << "'");
-        if (mesc.find(m.str(1)) != mesc.end()) {
+        if (mesc.find(m.str(1)) != mesc.end()) { // 看看escape seq有没有这个定义
           result += mesc[m.str(1)];
         } else {
           result += m.str(1);

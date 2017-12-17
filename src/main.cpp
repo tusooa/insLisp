@@ -1,3 +1,6 @@
+// the main program.
+// runs the lisp code in file if specified a file name
+// otherwise runs the repl(read eval print-loop)
 #include "struct.hpp"
 #include <iostream>
 #include "parser.hpp"
@@ -41,7 +44,7 @@ int main(int argc, char *argv[])
   }
   std::stringstream strStream;
   strStream << f.rdbuf();
-  std::string str = strStream.str();
+  std::string str = strStream.str(); // whole file is now here
   List argL;
   for (int i = 1; i < argc; i++) {
     argL.push_back(String(argv[i]));
