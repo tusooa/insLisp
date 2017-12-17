@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
         Any result = il->parse(str).evalOutOfBox(e, List());
         std::cout << "res= " << result.stringify() << std::endl;
       } catch (std::exception & e) {
-        std::cerr << e.what() << std::endl;
+        std::cerr << "error:" << e.what() << std::endl;
       }
     }
     return 0;
@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
   try {
     il->parse(str).value(e, argL);
   } catch (std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    std::cerr << "error:" << e.what() << std::endl;
   }
 #ifdef DEBUG
   system("pause");

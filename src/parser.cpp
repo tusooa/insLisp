@@ -21,7 +21,7 @@ namespace Lisp
     mregex = {
       {"command-s", Regex(R"r(^((?:.|\n)*?)(``|$))r" _R_MOD)},
       {"command-e", Regex(R"r(^[\s\n]*(?:''|$))r" _R_MOD)},
-      {"num", Regex(R"foo(^[\s\n]*([+-]?(?:(?:\d+[,_\d]*)(?:\.[,_\d]*)?|\.(?:\d+[,_\d]*)))(?=[\s\n(){}]|''))foo" _R_MOD)},
+      {"num", Regex(R"foo(^[\s\n]*([+-]?(?:(?:\d+[,_\d]*)(?:\.[,_\d]*)?|\.(?:\d+[,_\d]*)))(?=[\s\n(){}]|''|$))foo" _R_MOD)},
       {"symbol", Regex(R"foo(^[\s\n]*([^\s\n(){}`'\\_]+))foo" _R_MOD)},
       {"string-s", Regex(R"foo(^[\s\n]*\{)foo" _R_MOD)},
       {"string-s-d", Regex(R"foo(^(\{))foo" _R_MOD)},
