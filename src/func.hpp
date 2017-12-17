@@ -138,6 +138,14 @@ namespace Lisp
 	 {
 		 return Any(l);
 	 })) },
+	 { Symbol("dumper"), Any(Func([](EnvPtr, List l)
+	 {
+		 return Any(l[0].stringify());
+	 })) },
+	 { Symbol("length"), Any(Func([](EnvPtr, List l)
+	 {
+		 return Any(l[0].str().length());
+	 })) },
     {Symbol("if"), Any(Func([](EnvPtr e, List l) -> Any
     {
       if (l.size() <= 1) {
