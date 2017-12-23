@@ -13,10 +13,9 @@
 #include <boost/regex.hpp>
 typedef boost::regex Regex;
 using boost::smatch;
-//using boost::regex_search;
-// boost 和 std 语法不一样
-#define regex_search(A, B, C) boost::regex_search((A), (C), (B))
+using boost::regex_search;
 #else
+// FIXME: std::regex fails to work here
 #include <regex>
 typedef std::regex Regex;
 using std::smatch;

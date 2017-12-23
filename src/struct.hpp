@@ -31,6 +31,7 @@ namespace Lisp
       String name() const { return mname; }
       Symbol & name(String n) { mname = n; return *this; }
       bool operator==(const Symbol & another) const { return mname == another.mname; }
+      bool operator!=(const Symbol & rhs){ return !(*this == rhs); }
       bool operator<(const Symbol & another) const { return mname < another.mname; }
     };
     typedef std::vector<Any> List;

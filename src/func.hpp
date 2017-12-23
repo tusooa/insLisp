@@ -82,7 +82,7 @@ namespace Lisp
 		 }
 		 return Any(result);
 	 })) },
-	 { Symbol("="), Any(Func([](EnvPtr, List l) -> Any
+    { Symbol("="), Any(Func([](EnvPtr, List l) -> Any // numeric =
 	 {
 		 int a=l.size();
 		 if (a == 1) {
@@ -135,7 +135,7 @@ namespace Lisp
 		 }
 		 return Any(result);
 	 })) },
-	 { Symbol("#"), Any(Func([](EnvPtr, List l)
+    { Symbol("#"), Any(Func([](EnvPtr, List l) // comment
 	 {
 		 return Any();
 	 }).quote()) },
@@ -176,17 +176,68 @@ namespace Lisp
     {Symbol("progn"), Any(Func([](EnvPtr e, List l)
     {
       if (l.size() < 1) {
-        throw std::invalid_argument("wrong number aarguments");
+        throw std::invalid_argument("wrong-number-aarguments");
       }
       return l[l.size() - 1];
     }))},
     {Symbol("print"), Any(Func([](EnvPtr e, List l) -> Any
-                                 {
-                                   for (auto && i : l) {
-                                     std::cout << (i.type() == Type::str ? i.str() : i.stringify());
-                                   }
-                                   return Any();
-                                 }))},
+                               {
+                                 for (auto && i : l) {
+                                   std::cout << (i.type() == Type::str ? i.str() : i.stringify());
+                                 }
+                                 return Any();
+                               }))},
+    {Symbol("car"), Any(Func([](EnvPtr e, List l) -> Any
+                             {
+                               if (l.size() != 1) {
+                                 throw std::invalid_argument("wrong-number-arguments");
+                               }
+                               List full = l[0].list();
+                               if (full.size() == 0) { // (car nil) is nil
+                                 return Any();
+                               }
+                               return Any(full[0]); // first element
+                             }))},
+    {Symbol("cdr"), Any(Func([](EnvPtr e, List l) -> Any
+                             {
+                               if (l.size() != 1) {
+                                 throw std::invalid_argument("wrong-number-arguments");
+                               }
+                               List full = l[0].list();
+                               if (full.size() <= 1) { // (cdr '(p)) and (cdr nil) are both nil
+                                 return Any();
+                               } else {
+                                 full.erase(full.begin()); // rest elements
+                                 return Any(full);
+                               }
+                             }))},
+    {Symbol("cons"), Any(Func([](EnvPtr, List l) -> Any
+                              {
+                                if (l.size() != 2) {
+                                  throw std::invalid_argument("wrong-number-arguments");
+                                } else if (l[1].type() != Type::list) { // currently no real "cons" supported
+                                  throw std::invalid_argument("CDR must be a list");
+                                }
+                                List full = l[1].list();
+                                full.insert(full.begin(), l[0]);
+                                return Any(full);
+                              }))},
+    {Symbol("set"), Any(Func([](EnvPtr e, List l)
+    {
+      if (l.size() == 0 || l.size() % 2 == 1) {
+        throw std::invalid_argument("wrong-number-arguments");
+      }
+      Any result;
+      for (std::size_t i = 0; i < l.size(); i += 2) {
+        if (l[i].type() != Type::symbol) {
+          throw std::invalid_argument("varname is not a symbol");
+        }
+        result = l[i + 1];
+        e->var(l[i].sym(), result);
+      }
+      return result;
+    }))},
+
     {Symbol("setq"), Any(Func([](EnvPtr e, List l)
     {
       if (l.size() == 0 || l.size() % 2 == 1) {
@@ -202,6 +253,16 @@ namespace Lisp
       }
       return result;
     }).quote())},
+    {Symbol("eq"), Any(Func([](EnvPtr e, List l) -> Any
+                            {
+                              int end = l.size() - 1;
+                              for (int i = 0; i < end; i++) {
+                                if (l[i].sym() != l[i + 1].sym()) {
+                                  return Any();
+                                }
+                              }
+                              return Symbol("t");
+                            }))},
   };
 }
 

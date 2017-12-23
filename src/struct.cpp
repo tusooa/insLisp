@@ -222,6 +222,9 @@ namespace Lisp
   {
     return mreadonly;
   }
+  // 查找逻辑
+  // 先在自己找，如果有，返回自己，否则，递归查找上一级scope。
+  // 找不到返回nullptr.
   ScopePtr Scope::varScope(const Values::Symbol & name)
   {
     if (hasVarInScope(name)) {
@@ -307,4 +310,4 @@ namespace Lisp
     }
     return *this;
   }
-}; 
+};
