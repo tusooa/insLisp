@@ -129,6 +129,7 @@ namespace Lisp
             throw std::invalid_argument("invalid lambda defination: &optional following &rest");
           }
           opt = true;
+          continue; // &optional 本身不作为参数。
         }
         if (n.sym() == optRest) { // 余项
           if (rest) {

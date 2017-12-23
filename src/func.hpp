@@ -4,7 +4,10 @@
 #define FUNC_HPP
 
 #include <iostream>
+#include <fstream>
+#include <sstream>
 #include "struct.hpp"
+
 namespace Lisp
 {
   using namespace Lisp::Values;
@@ -145,10 +148,16 @@ namespace Lisp
 	 })) },
 	 { Symbol("dumper"), Any(Func([](EnvPtr, List l)
 	 {
+           if (l.size() != 1) {
+             throw std::invalid_argument("wrong-number-arguments");
+           }
 		 return Any(l[0].stringify());
 	 })) },
 	 { Symbol("length"), Any(Func([](EnvPtr, List l)
 	 {
+           if (l.size() != 1) {
+             throw std::invalid_argument("wrong-number-arguments");
+           }
 		 return Any(l[0].str().length());
 	 })) },
     {Symbol("if"), Any(Func([](EnvPtr e, List l) -> Any
@@ -263,6 +272,50 @@ namespace Lisp
                               }
                               return Symbol("t");
                             }))},
+    {Symbol("load"), Any(Func([](EnvPtr e, List l) -> Any
+                              {
+                                if (l.size() != 1) {
+                                  throw std::invalid_argument("wrong-number-arguments");
+                                }
+                                std::ifstream f(l[0].str());
+                                if (! f) {
+                                  throw std::invalid_argument("the file cannot be loaded.");
+                                }
+                                std::stringstream strStream;
+                                strStream << f.rdbuf();
+                                std::string str = strStream.str();
+                                return e->parser()->parse(str).evalOutOfBox(e, List());
+                              }))},
+    {Symbol("string="), Any(Func([](EnvPtr e, List l) -> Any
+                                 {
+                                   int end = l.size() - 1;
+                                   for (int i = 0; i < end; i++) {
+                                     if (l[i].str() != l[i + 1].str()) {
+                                       return Any();
+                                     }
+                                   }
+                                   return Symbol("t");
+                                 }))},
+    {Symbol("string>"), Any(Func([](EnvPtr e, List l) -> Any
+                                 {
+                                   int end = l.size() - 1;
+                                   for (int i = 0; i < end; i++) {
+                                     if (l[i].str() <= l[i + 1].str()) {
+                                       return Any();
+                                     }
+                                   }
+                                   return Symbol("t");
+                                 }))},
+    {Symbol("string<"), Any(Func([](EnvPtr e, List l) -> Any
+                                 {
+                                   int end = l.size() - 1;
+                                   for (int i = 0; i < end; i++) {
+                                     if (l[i].str() >= l[i + 1].str()) {
+                                       return Any();
+                                     }
+                                   }
+                                   return Symbol("t");
+                                 }))},
   };
 }
 

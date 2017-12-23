@@ -7,6 +7,7 @@
 #include "func.hpp"
 #include <fstream>
 #include <sstream>
+#include "constants.hpp"
 
 using namespace Lisp::Values;
 using namespace Lisp;
@@ -18,6 +19,9 @@ int main(int argc, char *argv[])
   for (auto && kv : BuiltinFunc) { // assign builtin functions
     ptr->var(kv.first, kv.second);
   }
+  ptr->var(symT, symT);
+  ptr->var(optRest, optRest);
+  ptr->var(optOptional, optOptional);
   EnvPtr e = std::make_shared<Env>(il, ptr);
   if (argc <= 1) {
     // repl
